@@ -1,19 +1,3 @@
-# chatroom
+# 匿名聊天室
 
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+刚创建工程，还没开始做，别急，害
