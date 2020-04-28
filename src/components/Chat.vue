@@ -30,10 +30,21 @@
                 </div>
             </div>
             <div class="message-area">
-                
+                <div v-for="msg in msgList" :key="msg.id">
+                    <div>{{msg.name}}: {{msg.msg}}</div>
+                </div>
             </div>
             <div class="input-area">
-                
+                <el-input
+                type="textarea"
+                :rows="4"
+                placeholder=""
+                v-model="msgInput">
+                </el-input>
+                <div class="edit-toolbox">
+                    <div class="select-file"><i class="el-icon-paperclip"></i></div>
+                    <button @click="sendMsg"><i class="el-icon-s-promotion"></i></button>
+                </div>
             </div>
         </div>
         <transition name="width">
@@ -47,7 +58,7 @@
                     </div>
                 </div>
                 <div class="edit-info">
-                    <div class="label label-avatar">上传头像</div>
+                    <div class="label">上传头像</div>
                     <div class="upload">
                         <el-upload
                         class="upload-avatar"
@@ -55,9 +66,14 @@
                         action="https://jsonplaceholder.typicode.com/posts/"
                         multiple>
                         <i class="el-icon-picture-outline"></i>
-                        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        <div class="el-upload__text">拖拽文件，或<em>点击上传</em></div>
                         </el-upload>
                     </div>
+                    <div class="label">群名</div>
+                    <input spellcheck="false" v-model="modifyRoomInfo.name" />
+                    <div class="label">简介</div>
+                    <input spellcheck="false" v-model="modifyRoomInfo.description" />
+                    <button>确认</button>
                 </div>
 
 
@@ -180,12 +196,37 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         .message-area {
             width: 100%;
             height: calc(80vh - 70px);
+            box-shadow: $bottomShadow;
         }
 
         .input-area {
             width: 100%;
             height: 20vh;
-            border-top: $mainBorder;
+            display: flex;
+            flex-direction: row;
+
+            .edit-toolbox {
+                width: 150px;
+                margin-left: auto;
+
+                button {
+                    color: white;
+                    background-color: #0176ff;
+                    border: none;
+                    outline: none;
+                    height: 50px;
+                    width: 50px;
+                    font-size: 1.3rem;
+                    border-radius: 50%;
+                    &:hover {
+                        background-color: #006deb;
+                        cursor: pointer;
+                    }
+                    &:active {
+                        background-color: #0055b6;
+                    }
+                }
+            }
         }
     }
 
@@ -208,7 +249,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
             .avatar {
                 width: 100px;
                 height: 100px;
-                margin-top: 100px;
+                margin-top: 10%;
                 border-radius: 50%;
             }
             .room-name {
@@ -221,7 +262,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         }
         .edit-info {
             flex: 1;
-            margin-top: 50px;
+            margin-top: 10%;
             height: 50%;
             border-radius: 5px;
             background-color: #f5f6fa;
@@ -229,11 +270,52 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
             .upload {
                 margin-top: 10px;
             }
-            .label-avatar {
-                margin-top: 50px;
+            .label {
+                margin-top: 20px;
                 margin-left: 10%;
                 font-size: 0.9rem;
                 color:gray;
+                white-space: nowrap;
+            }
+            input {
+                display: block;
+                margin: auto;
+                margin-top: 10px;
+                padding: 5px;
+                font-size: 1rem;
+                width: 80%;
+                height: 1.8rem;
+                text-indent: 5px;
+                border: none;
+                background-color: #edeef6;
+
+                &:hover {
+                    background-color: #e0e0f0;
+                }
+
+                &:focus {
+                    outline: #d5d5e5 solid 1px;
+                }
+            }
+            button {
+                display: block;
+                border: none;
+                border-radius: 5px;
+                color: white;
+                width: 85%;
+                height: 35px;
+                margin: auto;
+                margin-top: 20px;
+                font-size: 0.95rem;
+                outline: none;
+                background-color: #0176ff;
+                &:hover {
+                    background-color: #006deb;
+                    cursor: pointer;
+                }
+                &:active {
+                    background-color: #0055b6;
+                }
             }
         }
     }
@@ -246,13 +328,21 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
 .el-upload {
     display: block;
     width: 80%;
-    height: 140px;
+    min-width: 100px;
+    height: 120px;
     margin: 0 auto;
 
     .el-upload-dragger {
         width: 100%;
         height: 100%;
+        overflow: hidden;
         background-color: #edeef6;
+        border: none;
+
+        &:hover {
+            background-color: #e0e0f0;
+            border: none;
+        }
 
         .el-icon-picture-outline {
             margin-top: 20px;
@@ -266,6 +356,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         }
         .el-upload__text {
             margin-top: 10px;
+            white-space: nowrap;
         }
     }
 }
@@ -282,10 +373,50 @@ export default {
                 avatar: "default_avatar.jpg",
                 online: 0
             },
-            showSidebar: true,
-            msgList: {
-
+            modifyRoomInfo: {
+                roomid: "",
+                name: "群聊",
+                description: "这里什么都没有",
+                avatar: "default_avatar.jpg",
+            },
+            showSidebar: false,
+            msgList: [
+                {
+                    id: 1,
+                    user: "asdasdasd",
+                    name: "Vincentzyx",
+                    msg: "你好呀"
+                },
+                {
+                    id: 2,
+                    user: "qweqweqwe",
+                    name: "HH",
+                    msg: "我不好"
+                }
+            ],
+            msgInput: ""
+        }
+    },
+    methods: {
+        sendMsg() {
+            if (this.msgInput.length > 0)
+            {
+                this.io.emit("message", this.msgInput);
             }
+        }
+    },
+    mounted() {
+        this.io.on("message", (data) => {
+            this.msgList.push(data);
+            console.log(data);
+        });
+    },
+    watch: {
+        roomInfo(val) {
+            this.modifyRoomInfo.roomid = val.roomid;
+            this.modifyRoomInfo.name = val.name;
+            this.modifyRoomInfo.description = val.description;
+            this.modifyRoomInfo.avatar = val.avatar;
         }
     }
 }
