@@ -1,17 +1,17 @@
 <template>
     <div id="app">
         <div class="left-side-bar">
-            <i class="el-icon-message"></i>
+            <i class="el-icon-message" @click="gotoIndex"></i>
             <div class="left-btns">
                 <div class="btn-chat" @click="gotoChat">
                     <i class="el-icon-chat-square"></i>
-                    <div class="icon-new-message">·</div>
+                    <div class="icon-new-message" :class="{active: newMsg}">·</div>
                 </div>
                 <div class="btn-profile" @click="gotoProfile">
                     <i class="el-icon-user"></i>
                 </div>
             </div>
-            <i class="el-icon-setting"></i>
+            <i @click="$message.info('尚未实现')" class="el-icon-setting"></i>
         </div>
         <div class="router-content">
             <transition name="fade">
@@ -35,16 +35,16 @@ export default {
         return {
             roomInfo: {
                 roomid: "",
-                name: "群聊",
-                description: "这里什么都没有",
-                avatar: "default_avatar.jpg",
-                online: 0
+                name: "",
+                description: "",
+                avatar: "",
             },
             account: {
                 uid: "",
                 uidMd5: "",
                 name: ""
-            }
+            },
+            newMsg: false
         }
     },
     mounted() {
@@ -54,9 +54,7 @@ export default {
                 if ("crAccount" in localStorage)
                 {
                     this.account = JSON.parse(localStorage.getItem("crAccount"));
-                    console.warn(this.account.uid.length);
                     this.io.emit("user_auth", this.account.uid, this.account.name, (r)=>{
-                        console.warn(r);
                         if (r.code == 0)
                         {
                             this.account.uidMd5 = r.data;
@@ -71,10 +69,14 @@ export default {
             }
         });
     },
-    watch: {
-        roomInfo(val) {
-            this.$emit("roomInfoChange");
+    provide: function() {
+        return {
+            roomInfo: this.roomInfo,
+            account: this.account
         }
+    },
+    watch: {
+
     },
     methods: {
         gotoProfile() {
@@ -82,6 +84,10 @@ export default {
                 this.$router.push("/profile");
         },
         gotoChat() {
+            if (this.$router.currentRoute.path != ("/" + this.roomInfo.roomid))
+                this.$router.push("/" + this.roomInfo.roomid);
+        },
+        gotoIndex() {
             if (this.$router.currentRoute.path != "/")
                 this.$router.push("/");
         }
@@ -128,6 +134,7 @@ $hoverColor: rgb(37, 139, 255);
         margin-top: 2vh;
         font-size: 2.5rem;
         color: $hoverColor;
+        cursor: pointer;
     }
 
     .left-btns {
@@ -143,6 +150,10 @@ $hoverColor: rgb(37, 139, 255);
         font-size: 2rem;
         line-height: 5px;
         margin-bottom: 5vh;
+    }
+
+    .active {
+        color: #006deb;
     }
 
     .btn-profile {

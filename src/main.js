@@ -18,12 +18,12 @@ const routes = [
         component: ()=>import("@/components/Join.vue")
     },
     {
-        path: "/:room",
-        component: ()=>import("@/components/Chat.vue")
-    },
-    {
         path: "/profile",
         component: ()=>import("@/components/Profile.vue")
+    },
+    {
+        path: "/:room",
+        component: ()=>import("@/components/Chat.vue")
     }
 ]
 
