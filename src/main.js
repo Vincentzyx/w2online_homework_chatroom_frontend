@@ -15,6 +15,10 @@ Vue.prototype.io = SocketIO();
 const routes = [
     {
         path: "/",
+        component: ()=>import("@/components/Join.vue")
+    },
+    {
+        path: "/:room",
         component: ()=>import("@/components/Chat.vue")
     },
     {

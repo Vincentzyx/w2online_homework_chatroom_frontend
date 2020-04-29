@@ -30,18 +30,25 @@
                 </div>
             </div>
             <div class="message-area">
-                <div v-for="msg in msgList" :key="msg.id">
-                    <div>{{msg.name}}: {{msg.msg}}</div>
+                <div v-for="msg in msgList" :key="msg.id" class="msg" :class="{'self-msg': msg.user==account.uidMd5}">
+                    <img v-if="msg.user!=account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
+                    <div v-if="msg.user!=account.uidMd5" class="text">
+                        <div class="name">{{msg.name}}</div>
+                        <div class="content">{{msg.msg}}</div>
+                    </div>
+                    <div v-if="msg.user==account.uidMd5" class="text">
+                        <div class="name">{{msg.name}}</div>
+                        <div class="content">{{msg.msg}}</div>
+                    </div>
+                    <img v-if="msg.user==account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
                 </div>
             </div>
             <div class="input-area">
-                <el-input
-                type="textarea"
-                :rows="4"
-                placeholder=""
+                <textarea @keydown="enterInput" spellcheck="false"
                 v-model="msgInput">
-                </el-input>
+                </textarea>
                 <div class="edit-toolbox">
+                    <div class="face"><i class="el-icon-picture-outline-round"></i></div>
                     <div class="select-file"><i class="el-icon-paperclip"></i></div>
                     <button @click="sendMsg"><i class="el-icon-s-promotion"></i></button>
                 </div>
@@ -84,6 +91,7 @@
 
 <style lang="scss" scoped>
 $hoverColor: rgb(37, 139, 255);
+$activeColor: rgb(34, 108, 194);
 $mainBorder: 2px solid rgba(211, 211, 211, 0.5);
 $mainShadow: 1px 1px 3px lightgray;
 $bottomShadow: 0px 1px 3px rgba(211, 211, 211, 0.5);
@@ -94,6 +102,9 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
     &:hover {
         color: $hoverColor;
         cursor: pointer;
+    }
+    &:active {
+        color: $activeColor;
     }
 }
 
@@ -110,7 +121,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
     flex-direction: row;
 
     .mid-content {
-        flex-grow: 1;
+        flex: 1;
 
         .info-bar {
             height: 70px;
@@ -164,7 +175,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     @include setHoverColor;
 
                     &:hover .more-dropdown {
-                        height: 60px;
+                        height: 68px;
                         padding-top: 10px;
                     }
                 }
@@ -187,6 +198,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                         @include setHoverColor;
                         i {
                             margin-left: 10px;
+                            margin-bottom: 10px;
                         }
                     }
                 }
@@ -194,9 +206,71 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         }
         
         .message-area {
+            display: flex;
+            flex-direction: column;
             width: 100%;
             height: calc(80vh - 70px);
+            overflow-y: auto;
+            padding: 20px 0;
             box-shadow: $bottomShadow;
+            box-sizing: border-box;
+            /* width */
+            &::-webkit-scrollbar {
+                width: 5px;
+            }
+            /* Track */
+            &::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            /* Handle */
+            &::-webkit-scrollbar-thumb {
+                background: #888;
+            }
+            /* Handle on hover */
+            &::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+
+            .self-msg {
+                align-self: flex-end;
+                margin-left: 0 !important;
+                margin-right: 40px;
+                text-align: right;
+
+                .text {
+                    .name {
+                        white-space: nowrap;
+                    }
+
+                    border-radius: 10px 10px 0 10px !important;
+                }
+            }
+
+            .msg {
+                margin-left: 40px;
+                img {
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    display: inline-block;
+                }
+                .text {
+                    display: inline-block;
+                    background-color: #f5f6fa;
+                    padding: 15px;
+                    margin: 15px;
+                    max-width: 40%;
+                    vertical-align: bottom;
+                    border-radius: 10px 10px 10px 0;
+                    .name {
+                        font-weight: bold;
+                        font-size: 0.95rem;
+                    }
+                    .content {
+                        margin-top: 5px;
+                    }
+                }
+            }
         }
 
         .input-area {
@@ -205,17 +279,61 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
             display: flex;
             flex-direction: row;
 
+            textarea {
+                display: block;
+                flex: 1;
+                outline: none;
+                border: none;
+                margin: 20px;
+                font-size: 1.6rem;
+                overflow-y: auto;
+                background-color: rgb(245, 245, 245);
+                resize: none;
+                /* width */
+                &::-webkit-scrollbar {
+                    width: 3px;
+                }
+                /* Track */
+                &::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                }
+                /* Handle */
+                &::-webkit-scrollbar-thumb {
+                    background: #888;
+                }
+                /* Handle on hover */
+                &::-webkit-scrollbar-thumb:hover {
+                    background: #555;
+                }
+            }
+
             .edit-toolbox {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-around;
+                margin-top: 20px;
+                line-height: 2.8rem;
+                font-size: 1.2rem;
+                color:gray;
                 width: 150px;
                 margin-left: auto;
+
+                .select-file {
+                    @include setHoverColor;
+                }
+
+                .face {
+                    @include setHoverColor;
+                }
 
                 button {
                     color: white;
                     background-color: #0176ff;
                     border: none;
                     outline: none;
-                    height: 50px;
-                    width: 50px;
+                    height: 40px;
+                    width: 40px;
+                    margin-right: 20px;
                     font-size: 1.3rem;
                     border-radius: 50%;
                     &:hover {
@@ -233,9 +351,10 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
     .right-side-bar {
         display: flex;
         flex-direction: column;
-        width: 20%;
+        width: 25%;
         border-left: $mainBorder;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
         .close-sidebar {
             margin-top: 10px;
             margin-left: 10px;
@@ -366,13 +485,8 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
 export default {
     data() {
         return {
-            roomInfo: {
-                roomid: "",
-                name: "群聊",
-                description: "这里什么都没有",
-                avatar: "default_avatar.jpg",
-                online: 0
-            },
+            roomInfo: this.$parent.roomInfo,
+            account: this.$parent.account,
             modifyRoomInfo: {
                 roomid: "",
                 name: "群聊",
@@ -381,18 +495,7 @@ export default {
             },
             showSidebar: false,
             msgList: [
-                {
-                    id: 1,
-                    user: "asdasdasd",
-                    name: "Vincentzyx",
-                    msg: "你好呀"
-                },
-                {
-                    id: 2,
-                    user: "qweqweqwe",
-                    name: "HH",
-                    msg: "我不好"
-                }
+
             ],
             msgInput: ""
         }
@@ -403,21 +506,86 @@ export default {
             {
                 this.io.emit("message", this.msgInput);
             }
-        }
-    },
-    mounted() {
-        this.io.on("message", (data) => {
-            this.msgList.push(data);
-            console.log(data);
-        });
-    },
-    watch: {
-        roomInfo(val) {
+        },
+        enterInput(e){
+            if(e.keyCode == 13 && e.ctrlKey)
+            {
+                this.msgInput += "\n";
+            }
+            else if(e.keyCode == 13){
+                this.sendMsg();
+                e.preventDefault();
+            }
+        },
+        roomInfoChange() {
             this.modifyRoomInfo.roomid = val.roomid;
             this.modifyRoomInfo.name = val.name;
             this.modifyRoomInfo.description = val.description;
             this.modifyRoomInfo.avatar = val.avatar;
+            console.log("modified");
+        },
+        joinRoom(roomid, callback) {
+            this.io.emit("join_room", roomid, callback);
+        },
+        getHistory() {
+            if (this.msgList.length == 0)
+            {
+                this.io.emit("msg_history", this.roomInfo.roomid, 1, -1, (r) => {
+                    if (r.code == 0)
+                    {
+                        this.msgList = r.data;
+                    }
+                    else
+                    {
+                        this.$message.error(r.msg);
+                    }
+                });
+            }
+            else
+            {
+                this.io.emit("msg_history", this.roomInfo.roomid, 1, msgList[0].id, (r) => {
+                    if (r.code == 0)
+                    {
+                        for (let msg of r.data)
+                        {
+                            this.msgList.splice(0, 0, msg);
+                        }
+                    }
+                    else
+                    {
+                        this.$message.error(r.msg);
+                    }
+                });
+            }
+            this.scrollToEnd();
+        },
+        scrollToEnd() {
+            var container = this.$el.getElementsByClassName("message-area")[0];
+            container.scrollTop = container.scrollHeight;
         }
+    },
+    mounted() {
+        this.$parent.$on("roomInfoChange", this.roomInfoChange);
+        this.io.on("message", (data) => {
+            this.msgList.push(data);
+            this.scrollToEnd();
+        });
+    },
+    beforeRouteUpdate (to, from, next) {
+        this.roomInfo.roomid = to.params["room"];
+        this.getHistory();
+        next();
+    },
+    beforeRouteEnter (to, from, next) {
+        next(vm => {
+            vm.roomInfo.roomid = vm.$route.params["room"];
+            vm.joinRoom(vm.roomInfo.roomid, (r) => {
+                vm.getHistory();
+            });
+        })
+    },
+    watch: {
+
     }
 }
 </script>

@@ -13,7 +13,7 @@
             </div>
             <i class="el-icon-setting"></i>
         </div>
-        <div class="content">
+        <div class="router-content">
             <transition name="fade">
                 <router-view></router-view>
             </transition>
@@ -25,7 +25,7 @@
 
 
 import { MessageBox } from "element-ui"
-
+import md5 from "js-md5"
 export default {
     name: 'App',
     components: {
@@ -33,13 +33,48 @@ export default {
     },
     data() {
         return {
-            Account: {
-
+            roomInfo: {
+                roomid: "",
+                name: "群聊",
+                description: "这里什么都没有",
+                avatar: "default_avatar.jpg",
+                online: 0
+            },
+            account: {
+                uid: "",
+                uidMd5: "",
+                name: ""
             }
         }
     },
     mounted() {
-        
+        this.io.on("give_id", (r) => {
+            if (r.code == 0)
+            {
+                if ("crAccount" in localStorage)
+                {
+                    this.account = JSON.parse(localStorage.getItem("crAccount"));
+                    console.warn(this.account.uid.length);
+                    this.io.emit("user_auth", this.account.uid, this.account.name, (r)=>{
+                        console.warn(r);
+                        if (r.code == 0)
+                        {
+                            this.account.uidMd5 = r.data;
+                        }
+                    });
+                }
+                else
+                {
+                    this.account = r.data;
+                    localStorage.setItem("crAccount", JSON.stringify(this.account));
+                }
+            }
+        });
+    },
+    watch: {
+        roomInfo(val) {
+            this.$emit("roomInfoChange");
+        }
     },
     methods: {
         gotoProfile() {
@@ -80,7 +115,7 @@ $hoverColor: rgb(37, 139, 255);
     height: 100vh;
 }
 
-.content {
+.router-content {
     width: 100%;
 }
 
