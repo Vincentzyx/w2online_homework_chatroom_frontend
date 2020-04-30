@@ -47,6 +47,9 @@ export default {
             newMsg: false
         }
     },
+    created() {
+        document.addEventListener('beforeunload', this.onClosing);
+    },
     mounted() {
         this.io.on("give_id", (r) => {
             if (r.code == 0)
@@ -90,6 +93,13 @@ export default {
         gotoIndex() {
             if (this.$router.currentRoute.path != "/")
                 this.$router.push("/");
+        },
+        onClosing() {
+            if (this.roomInfo.roomid != "" || true)
+            {
+                this.io.emit("leave_room");
+            }
+            this.io.emit("fuck");
         }
     }
 }
@@ -129,7 +139,7 @@ $hoverColor: rgb(37, 139, 255);
     width: 80px;
     text-align: center;
     box-shadow: 0 0 5px rgb(211, 211, 211);
-    
+    user-select: none;
     .el-icon-message {
         margin-top: 2vh;
         font-size: 2.5rem;

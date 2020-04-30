@@ -5,23 +5,29 @@
                 <img :src="roomAvatar" />
                 <div class="text-info">
                     <div class="room-name">{{$parent.roomInfo.name}}</div>
-                    <div class="description">{{online + " 在线 · " + $parent.roomInfo.description}}</div>
+                    <div class="description"><span :title="onlineDisplay">{{onlineList.length + " 在线"}}</span> · <span :title="$parent.roomInfo.description">{{$parent.roomInfo.description}}</span></div>
                 </div>
+                <div class="loading" v-show="loadingHistory">加载中 <i class="el-icon-loading"></i></div>
+                <transition name="fade">
+                    <div class="search-bar" v-show="showSearchbar">
+                        <input type="text" placeholder="搜索聊天记录" v-model="searchText">
+                    </div>
+                </transition>
                 <div class="right-side-btns">
-                    <div class="search-btn">
+                    <div class="search-btn" @click="showSearchbar=!showSearchbar">
                         <i class="el-icon-search"></i>
                     </div>
-                    <div class="invite-btn">
-                        <i class="el-icon-circle-plus-outline"></i>
+                    <div class="invite-btn" @click="showSidebar_Share=!showSidebar_Share">
+                        <i class="el-icon-share"></i>
                     </div>
                     <div class="more-btn">
                         <i class="el-icon-more"></i>
                         <div class="more-dropdown">
-                            <div @click="showSidebar=true">
+                            <div class="btn-edit-info" @click="showSidebar_Info=true">
                                 修改信息
                                 <i class="el-icon-edit"></i>
                             </div>
-                            <div>
+                            <div class="btn-delete-room" @click="deleteRoom">
                                 解散群组
                                 <i class="el-icon-delete"></i>
                             </div>
@@ -31,16 +37,18 @@
             </div>
             <div class="message-area">
                 <div v-for="msg in msgList" :key="msg.id" class="msg" :class="{'self-msg': msg.user==$parent.account.uidMd5}">
-                    <img v-if="msg.user!=$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
-                    <div v-if="msg.user!=$parent.account.uidMd5" class="text">
-                        <div class="name">{{msg.name}}</div>
-                        <div class="content">{{msg.msg}}</div>
+                    <div v-show="!showSearchbar || searchText=='' || msg.msg.indexOf(searchText) != -1">
+                        <img v-if="msg.user!=$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
+                        <div v-if="msg.user!=$parent.account.uidMd5" class="text">
+                            <div class="name">{{msg.name}}</div>
+                            <div class="content">{{msg.msg}}</div>
+                        </div>
+                        <div v-if="msg.user==$parent.account.uidMd5" class="text">
+                            <div class="name">{{msg.name}}</div>
+                            <div class="content">{{msg.msg}}</div>
+                        </div>
+                        <img v-if="msg.user==$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
                     </div>
-                    <div v-if="msg.user==$parent.account.uidMd5" class="text">
-                        <div class="name">{{msg.name}}</div>
-                        <div class="content">{{msg.msg}}</div>
-                    </div>
-                    <img v-if="msg.user==$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
                 </div>
             </div>
             <div class="input-area">
@@ -50,7 +58,7 @@
                 <div class="edit-toolbox">
                     <div class="face">
                         <span @click="showFacePanel=!showFacePanel" :class="{active:showFacePanel}">☺</span>
-                        <div v-show="showFacePanel" class="face-panel">
+                        <div v-if="showFacePanel" class="face-panel">
                             <div class="emoji-select">
                                 <span :class="{active: emojiType==0}" @click="emojiType=0">😀</span>
                                 <span :class="{active: emojiType==1}" @click="emojiType=1">🐱</span>
@@ -66,14 +74,26 @@
                             </div>
                         </div>
                     </div>
-                    <div class="select-file" @click="$message.info('尚未实现')"><i class="el-icon-paperclip"></i></div>
-                    <button @click="sendMsg"><i class="el-icon-s-promotion"></i></button>
+                    <div class="select-file" @click="showAttachPanel=!showAttachPanel"><i class="el-icon-paperclip"></i></div>
+                    <div class="attach-panel" v-if="showAttachPanel">
+                        <el-upload
+                        class="upload-demo"
+                        action="/api/attachment-upload"
+                        :on-success="attachmentUploadSuccess"
+                        :on-error="attachmentUploadError"
+                        multiple
+                        :file-list="attachmentList">
+                        <button>点击上传</button>
+                        <div class="label">只能上传图片/文档</div>
+                        </el-upload>
+                    </div>
+                    <button @click="sendMsg" class="btn-send"><i class="el-icon-s-promotion"></i></button>
                 </div>
             </div>
         </div>
         <transition name="width">
-            <div class="right-side-bar" v-show="showSidebar">
-                <div class="close-sidebar" @click="showSidebar=false"><i class="el-icon-arrow-left"></i></div>
+            <div class="side-bar-info" v-show="showSidebar_Info">
+                <div class="close-sidebar" @click="showSidebar_Info=false"><i class="el-icon-arrow-left"></i></div>
                 <div class="room-info">
                     <img class="avatar" :src="roomAvatar" />
                     <div class="text-info">
@@ -103,12 +123,40 @@
 
             </div>
         </transition>
+        <transition name="width">
+            <div class="side-bar-share" v-show="showSidebar_Share">
+                <div class="close-sidebar" @click="showSidebar_Share=false"><i class="el-icon-arrow-left"></i></div>
+                <div class="room-info">
+                    <img class="avatar" :src="roomAvatar" />
+                    <div class="text-info">
+                        <div class="room-name">{{$parent.roomInfo.name}}</div>
+                        <div class="link" @click="copyLink()">
+                            <div class="description">{{$parent.roomInfo.description}}</div>
+                            <i class="el-icon-link"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="share-links">
+                    <div class="qq" @click="shareToPlatform('qq')">
+                        <span><i class="el-icon-link"></i> QQ分享</span>
+                    </div>
+                    <div class="weibo" @click="shareToPlatform('weibo')">
+                        <span><i class="el-icon-link"></i> 分享到微博</span>
+                    </div>
+                    <div class="wechat" @click="shareToPlatform('wechat')">
+                        <span><i class="el-icon-link"></i> 分享到微信</span>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </div>
 </template>
 
 <style lang="scss" scoped>
 $hoverColor: rgb(37, 139, 255);
 $activeColor: rgb(34, 108, 194);
+$hoverColorRed: rgb(231, 78, 78);
+$activeColorRed: rgb(160, 49, 49);
 $mainBorder: 2px solid rgba(211, 211, 211, 0.5);
 $mainShadow: 1px 1px 3px lightgray;
 $bottomShadow: 0px 1px 3px rgba(211, 211, 211, 0.5);
@@ -125,12 +173,63 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
     }
 }
 
+@mixin setHoverColorRed {
+    transition: color 0.3s;
+    &:hover {
+        color: $hoverColorRed;
+        cursor: pointer;
+    }
+    &:active {
+        color: $activeColorRed;
+    }
+}
+
+@mixin defaultButton {
+    color: white;
+    background-color: #0176ff;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    transition: background-color .3s;
+    &:hover {
+        background-color: #006deb;
+        cursor: pointer;
+    }
+    &:active {
+        background-color: #0055b6;
+    }
+}
+
+@mixin defaultInput {
+    display: block;
+    padding: 5px;
+    font-size: 1rem;
+    text-indent: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #edeef6;
+    &:hover {
+        background-color: #e0e0f0;
+    }
+    &:focus {
+        outline: #d5d5e5 solid 1px;
+    }
+}
+
 .width-enter-active, .width-leave-active {
     transition: width .3s;
 }
 
 .width-enter, .width-leave-to {
     width: 0% !important;
+}
+
+.height-enter-active, .height-leave-active {
+    transition: width .3s;
+}
+
+.height-enter, .height-leave-to {
+    height: 0px !important;
 }
 
 .container {
@@ -141,6 +240,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         flex: 1;
 
         .info-bar {
+            position: relative;
             height: 70px;
             display: flex;
             flex-direction: row;
@@ -157,8 +257,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
             }
 
             .text-info {
-                max-width: 200px;
-                
+                width: 30%;
                 overflow: hidden;
                 margin: {
                     top: 1.4vh;
@@ -169,12 +268,43 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     font-size: 0.9rem;
                 }
                 .description {
-                    display: inline;
+                    display: inline-block;
                     line-height: 2rem;
                     font-size: 0.8rem;
+                    width: 100%;
                     color: gray;
                     white-space: nowrap;
+                    overflow: hidden;
                     text-overflow: ellipsis;
+                }
+            }
+
+            .loading {
+                position: absolute;
+                text-align: center;
+                top: 80px;
+                left: calc(50% - 1.5rem);
+                color: gray;
+                font-size: 0.8rem;
+                i {
+                    font-size: 0.9rem;
+                }
+            }
+
+            .search-bar {
+                position: absolute;
+                top: 85px;
+                left: 0;
+                width: 100%;
+                height: 30px;
+                text-align: center;
+                
+
+                input {
+                    @include defaultInput;
+                    margin: auto;
+                    width: 95%;
+                    height: 100%;
                 }
             }
 
@@ -217,12 +347,15 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     box-shadow: 1px 1px 5px lightgray;
                     overflow: hidden;
                     transition: all .3s;
-                    div {
+                    div i {
+                        margin-left: 10px;
+                        margin-bottom: 10px;
+                    }
+                    .btn-edit-info {
                         @include setHoverColor;
-                        i {
-                            margin-left: 10px;
-                            margin-bottom: 10px;
-                        }
+                    }
+                    .btn-delete-room {
+                        @include setHoverColorRed;
                     }
                 }
             }
@@ -258,10 +391,13 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 text-align: right;
 
                 .text {
+                    background-color: #0176ff !important;
                     .name {
                         white-space: nowrap;
+                        color: #c8e1ff !important;
                     }
                     .content {
+                        color: white;
                         text-align: left;
                     }
 
@@ -292,6 +428,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     }
                     .content {
                         margin-top: 5px;
+                        word-wrap: break-word;
                     }
                 }
             }
@@ -309,7 +446,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 outline: none;
                 border: none;
                 margin: 20px;
-                font-size: 1.6rem;
+                font-size: 1.2rem;
                 overflow-y: auto;
                 background-color: rgb(245, 245, 245);
                 resize: none;
@@ -337,7 +474,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 flex-direction: row;
                 justify-content: space-around;
                 align-items: center;
-                padding-bottom: 8%;
+                padding-bottom: calc(3% + 20px);
                 line-height: 2.8rem;
                 font-size: 1.2rem;
                 color:gray;
@@ -414,33 +551,44 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     @include setHoverColor;
                 }
 
+                .attach-panel {
+                    position: absolute;
+                    bottom: 130px;
+                    left:-200px;
+                    padding: 20px;
+                    width: 250px;
+                    overflow: hidden;
+                    box-shadow: 0 0 5px lightgray;
+                    background-color: white;
+                    
+                    transition: all .3s;
+                    .label {
+                        font-size: 0.9rem;
+                    }
+                    button {
+                        @include defaultButton;
+                        height: 30px;
+                        width: 100px;
+                    }
+                }
+
                 .face {
                     @include setHoverColor;
                 }
 
-                button {
-                    color: white;
-                    background-color: #0176ff;
-                    border: none;
-                    outline: none;
+                .btn-send{
+                    @include defaultButton;
                     height: 40px;
                     width: 40px;
                     margin-right: 20px;
                     font-size: 1.3rem;
                     border-radius: 50%;
-                    &:hover {
-                        background-color: #006deb;
-                        cursor: pointer;
-                    }
-                    &:active {
-                        background-color: #0055b6;
-                    }
                 }
             }
         }
     }
 
-    .right-side-bar {
+    .side-bar-info {
         display: flex;
         flex-direction: column;
         width: 25%;
@@ -467,6 +615,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 font-size: 1.3rem;
             }
             .description {
+                display: -webkit-box;
                 box-sizing: border-box;
                 padding: 0 10px;
                 margin: auto;
@@ -476,7 +625,12 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 height: 2.55rem;
                 overflow: hidden;
                 white-space: normal;
-                word-wrap: break-word;
+                word-wrap: break-all;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                -webkit-box-orient: vertical;
             }
         }
         .edit-info {
@@ -530,24 +684,13 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 white-space: nowrap;
             }
             input {
-                display: block;
+                @include defaultInput;
                 margin: auto;
                 margin-top: 10px;
                 padding: 5px;
                 font-size: 1rem;
                 width: 80%;
                 height: 1.8rem;
-                text-indent: 5px;
-                border: none;
-                background-color: #edeef6;
-
-                &:hover {
-                    background-color: #e0e0f0;
-                }
-
-                &:focus {
-                    outline: #d5d5e5 solid 1px;
-                }
             }
             button {
                 display: block;
@@ -571,6 +714,107 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
             }
         }
     }
+
+    .side-bar-share {
+        display: flex;
+        flex-direction: column;
+        width: 20%;
+        border-left: $mainBorder;
+        overflow-x: hidden;
+        overflow-y: auto;
+        .close-sidebar {
+            margin-top: 10px;
+            margin-left: 10px;
+            font-size: 1.6rem;
+            @include setHoverColor;
+        }
+
+        .room-info {
+            text-align: left;
+            min-width: 100px;
+            margin-top: 15%;
+            vertical-align: center;
+            .avatar {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                margin-left: 15%;
+                border-radius: 50%;
+            }
+            .text-info {
+                display: inline-block;
+                margin-left: 10px;
+                line-height: 1.4rem;
+                width: calc(75% - 60px);
+                .room-name {
+                    font-size: 1rem;
+                }
+                .link {
+                    &:hover {
+                        color:#0176ff;
+                        cursor: pointer;
+                        .description {
+                            color:#0176ff;
+                        }
+                    }
+                    .description {
+                        display: inline-block;
+                        box-sizing: border-box;
+                        color:gray;
+                        width: 80%;
+                        font-size: 0.8rem;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                    }
+                    i {
+                        display: inline-block;
+                        vertical-align: bottom;
+                        padding-bottom: 0.50rem;
+                        font-size: 0.95rem;
+                    }
+                }
+
+            }
+        }
+
+        .share-links {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1;
+            margin-top: 40px;
+            background-color: #f5f6fa;
+            .qq {
+                margin-top: 30px;
+            }
+            div {
+                width: 90%;
+                height: 60px;
+                line-height: 60px;
+                margin-left: 5%;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                background-color: white;
+                transition: all .3s;
+                user-select: none;
+                &:hover {
+                    cursor: pointer;
+                    background-color: lightgray;
+                }
+                &:active {
+                    background-color: rgb(189, 189, 189);
+                }
+                span {
+                    margin-left: 20px;
+                    font-size: 0.9rem;
+                }
+            }
+            .wechat {
+                border-bottom: none;
+            }
+        }
+    }
 }
 
 </style>
@@ -581,11 +825,15 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
         color:#0176ff !important;
     }
 }
+.el-upload--text {
+    text-align: left;
+}
 </style>
 
 <script>
 import ImageUpload from "vue-image-crop-upload"
 import md5 from "js-md5"
+import emojiList from "@/emoji.js"
 
 
 export default {
@@ -600,26 +848,23 @@ export default {
                 description: "这里什么都没有",
                 avatar: "",
             },
-            showSidebar: false,
+            showSidebar_Info: false,
+            showSidebar_Share: true,
+            showSearchbar: false,
             showCropUpload: false,
             showFacePanel: false,
+            showAttachPanel: false,
+            finishLoading: false,
+            loadingHistory: false,
             newMsg: false,
-            newMsgWatcher: 0,
-            msgList: [
-
-            ],
+            newMsgWatcher: -1,
+            loadMsgWatcher: -1,
+            msgList: [],
             msgInput: "",
-            online: 0,
-            emojis: [
-                ["😀","😃","😄","😁","😆","😅","😂","🤣","😇","😉","😊","🙂","🙃","☺","😋","😌","😍","🥰","😘","😗","😙","😚","🤪","😜","😝","😛","🤑","😎","🤓","🧐","🤠","🥳","🤗","🤡","😏","😶","😐","😑","😒","🙄","🤨","🤔","🤫","🤭","🤥","😳","😞","😟","😠","😡","🤬","😔","😕","🙁","☹","😬","🥺","😣","😖","😫","😩","🥱","😤","😮","😱","😨","😰","😯","😦","😧","😢","😥","😪","🤤","😓","😭","🤩","😵","🥴","😲","🤯","🤐","😷","🤕","🤒","🤮","🤢","🤧","🥵","🥶","😴","💤","😈","👿","👹","👺","💩","👻","💀","☠","👽","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","👐","🤲","🙌","👏","🙏","🤝","👍","👎","👊","✊","🤛","🤜","🤞","✌","🤘","🤟","👌","🤏","👈","👉","👆","👇","☝","✋","🤚","🖐","🖖","👋","🤙","💪","🦾","🖕","✍","🤳","💅","🦵","🦿","🦶","👄","🦷","👅","👂","🦻","👃","👁","👀","🧠","🦴","👤","👥","🗣","👶","👧","🧒","👦","👩","🧑","👨","👩‍🦱","🧑‍🦱","👨‍🦱","👩‍🦰","🧑‍🦰","👨‍🦰","👱‍♀️","👱","👱‍♂️","👩‍🦳","🧑‍🦳","👨‍🦳","👩‍🦲","🧑‍🦲","👨‍🦲","🧔","👵","🧓","👴","👲","👳‍♀️","👳","👳‍♂️","🧕","👼","👸","🤴","👰","🤵‍♀️","🤵","🤵‍♂️","🙇‍♀️","🙇","🙇‍♂️","💁‍♀️","💁","💁‍♂️","🙅‍♀️","🙅","🙅‍♂️","🙆‍♀️","🙆","🙆‍♂️","🤷‍♀️","🤷","🤷‍♂️","🙋‍♀️","🙋","🙋‍♂️","🤦‍♀️","🤦","🤦‍♂️","🧏‍♀️","🧏","🧏‍♂️","🙎‍♀️","🙎","🙎‍♂️","🙍‍♀️","🙍","🙍‍♂️","💇‍♀️","💇","💇‍♂️","💆‍♀️","💆","💆‍♂️","🤰","🤱","🧎‍♀️","🧎","🧎‍♂️","🧍‍♀️","🧍","🧍‍♂️","🚶‍♀️","🚶","🚶‍♂️","👩‍🦯","🧑‍🦯","👨‍🦯","🏃‍♀️","🏃","🏃‍♂️","👩‍🦼","🧑‍🦼","👨‍🦼","👩‍🦽","🧑‍🦽","👨‍🦽","💃","🕺","👫","👭","👬","🧑‍🤝‍🧑","👩‍❤️‍👨","👩‍❤️‍👩","💑","👨‍❤️‍👨","👩‍❤️‍💋‍👨","👩‍❤️‍💋‍👩","💏","👨‍❤️‍💋‍👨","❤","🧡","💛","💚","💙","💜","🤎","🖤","🤍","💔","❣","💕","💞","💓","💗","💖","💘","💝","💟"],
-                ["🐶","🐱","🐭","🐹","🐰","🐻","🧸","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🦍","🦧","🐔","🐧","🐦","🐤","🐣","🐥","🐺","🦊","🦝","🐗","🐴","🦓","🦒","🦌","🦘","🦥","🦦","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦗","🕷","🕸","🦂","🦟","🦠","🐢","🐍","🦎","🐙","🦑","🦞","🦀","🦐","🦪","🐠","🐟","🐡","🐬","🦈","🐳","🐋","🐊","🐆","🐅","🐃","🐂","🐄","🐪","🐫","🦙","🐘","🦏","🦛","🐐","🐏","🐑","🐎","🐖","🦇","🐓","🦃","🕊","🦅","🦆","🦢","🦉","🦩","🦚","🦜","🐕","🦮","🐕‍🦺","🐩","🐈","🐇","🐀","🐁","🐿","🦨","🦡","🦔","🐾","🐉","🐲","🦕","🦖","🌵","🎄","🌲","🌳","🌴","🌱","🌿","☘","🍀","🎍","🎋","🍃","🍂","🍁","🌾","🌺","🌻","🌹","🥀","🌷","🌼","🌸","💐","🍄","🌰","🐚","🌎","🌍","🌏","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌚","🌝","🌛","🌜","⭐","🌟","💫","✨","☄","🪐","🌞","☀","🌤","⛅","🌥","🌦","☁","🌧","⛈","🌩","⚡","🔥","💥","❄","🌨","☃","⛄","🌬","💨","🌪","🌫","🌈","☔","💧","💦","🌊"],
-                ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🥑","🍆","🌶","🥒","🥬","🥦","🧄","🧅","🌽","🥕","🥗","🥔","🍠","🥜","🍯","🍞","🥐","🥖","🥨","🥯","🥞","🧇","🧀","🍗","🍖","🥩","🍤","🥚","🍳","🥓","🍔","🍟","🌭","🍕","🍝","🥪","🌮","🌯","🥙","🧆","🍜","🥘","🍲","🥫","🧂","🧈","🍥","🍣","🍱","🍛","🍙","🍚","🍘","🥟","🍢","🍡","🍧","🍨","🍦","🍰","🎂","🧁","🥧","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🥠","🥮","☕","🍵","🥣","🍼","🥤","🧃","🧉","🥛","🍺","🍻","🍷","🥂","🥃","🍸","🍹","🍾","🍶","🧊","🥄","🍴","🍽","🥢","🥡"],
-                ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🎱","🥏","🏓","🏸","🥅","🏒","🏑","🏏","🥍","🥌","⛳","🏹","🎣","🤿","🥊","🥋","⛸","🎿","🛷","⛷","🏂","🏋️‍♀️","🏋","🏋️‍♂️","🤺","🤼‍♀️","🤼","🤼‍♂️","🤸‍♀️","🤸","🤸‍♂️","⛹️‍♀️","⛹","⛹️‍♂️","🤾‍♀️","🤾","🤾‍♂️","🧗‍♀️","🧗","🧗‍♂️","🏌️‍♀️","🏌","🏌️‍♂️","🧘‍♀️","🧘","🧘‍♂️","🧖‍♀️","🧖","🧖‍♂️","🏄‍♀️","🏄","🏄‍♂️","🏊‍♀️","🏊","🏊‍♂️","🤽‍♀️","🤽","🤽‍♂️","🚣‍♀️","🚣","🚣‍♂️","🏇","🚴‍♀️","🚴","🚴‍♂️","🚵‍♀️","🚵","🚵‍♂️","🎽","🎖","🏅","🥇","🥈","🥉","🏆","🏵","🎗","🎫","🎟","🎪","🤹‍♀️","🤹","🤹‍♂️","🎭","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🎷","🎺","🎸","🪕","🎻","🎲","🧩","♟","🎯","🎳","🪀","🪁","🎮","👾","🎰","👮‍♀️","👮","👮‍♂️","👩‍🚒","🧑‍🚒","👨‍🚒","👷‍♀️","👷","👷‍♂️","👩‍🏭","🧑‍🏭","👨‍🏭","👩‍🔧","🧑‍🔧","👨‍🔧","👩‍🌾","🧑‍🌾","👨‍🌾","👩‍🍳","🧑‍🍳","👨‍🍳","👩‍🎤","🧑‍🎤","👨‍🎤","👩‍🎨","🧑‍🎨","👨‍🎨","👩‍🏫","🧑‍🏫","👨‍🏫","👩‍🎓","🧑‍🎓","👨‍🎓","👩‍💼","🧑‍💼","👨‍💼","👩‍💻","🧑‍💻","👨‍💻","👩‍🔬","🧑‍🔬","👨‍🔬","👩‍🚀","🧑‍🚀","👨‍🚀","👩‍⚕️","🧑‍⚕️","👨‍⚕️","👩‍⚖️","🧑‍⚖️","👨‍⚖️","👩‍✈️","🧑‍✈️","👨‍✈️","💂‍♀️","💂","💂‍♂️","🕵️‍♀️","🕵","🕵️‍♂️","🤶","🎅","🕴️‍♀️","🕴","🕴️‍♂️","🦸‍♀️","🦸","🦸‍♂️","🦹‍♀️","🦹","🦹‍♂️","🧙‍♀️","🧙","🧙‍♂️","🧝‍♀️","🧝","🧝‍♂️","🧚‍♀️","🧚","🧚‍♂️","🧞‍♀️","🧞","🧞‍♂️","🧜‍♀️","🧜","🧜‍♂️","🧛‍♀️","🧛","🧛‍♂️","🧟‍♀️","🧟","🧟‍♂️","👯‍♀️","👯","👯‍♂️","👪","👨‍👩‍👧","👨‍👩‍👧‍👦","👨‍👩‍👦‍👦","👨‍👩‍👧‍👧","👩‍👩‍👦","👩‍👩‍👧","👩‍👩‍👧‍👦","👩‍👩‍👦‍👦","👩‍👩‍👧‍👧","👨‍👨‍👦","👨‍👨‍👧","👨‍👨‍👧‍👦","👨‍👨‍👦‍👦","👨‍👨‍👧‍👧","👩‍👦","👩‍👧","👩‍👧‍👦","👩‍👦‍👦","👩‍👧‍👧","👨‍👦","👨‍👧","👨‍👧‍👦","👨‍👦‍👦","👨‍👧‍👧"],
-                ["🚗","🚙","🚕","🛺","🚌","🚎","🏎","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🏍","🛵","🚲","🦼","🦽","🛴","🛹","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚝","🚄","🚅","🚈","🚞","🚂","🚆","🚇","🚊","🚉","🚁","🛩","✈","🛫","🛬","🪂","💺","🛰","🚀","🛸","🛶","⛵","🛥","🚤","⛴","🛳","🚢","⚓","⛽","🚧","🚏","🚦","🚥","🛑","🎡","🎢","🎠","🏗","🌁","🗼","🏭","⛲","🎑","⛰","🏔","🗻","🌋","🗾","🏕","⛺","🏞","🛣","🛤","🌅","🌄","🏜","🏖","🏝","🌇","🌆","🏙","🌃","🌉","🌌","🌠","🎇","🎆","🏘","🏰","🏯","🏟","🗽","🏠","🏡","🏚","🏢","🏬","🏣","🏤","🏥","🏦","🏨","🏪","🏫","🏩","💒","🏛","⛪","🕌","🛕","🕍","🕋","⛩"],
-                ["⌚","📱","📲","💻","⌨","🖥","🖨","🖱","🖲","🕹","🗜","💽","💾","💿","📀","📼","📷","📸","📹","🎥","📽","🎞","📞","☎","📟","📠","📺","📻","🎙","🎚","🎛","⏱","⏲","⏰","🕰","⏳","⌛","🧮","📡","🔋","🔌","💡","🔦","🕯","🧯","🗑","🛢","🛒","💸","💵","💴","💶","💷","💰","💳","🧾","💎","⚖","🦯","🧰","🔧","🔨","⚒","🛠","⛏","🪓","🔩","⚙","⛓","🧱","🔫","🧨","💣","🔪","🗡","⚔","🛡","🚬","⚰","⚱","🏺","🔮","📿","🧿","💈","🧲","⚗","🧪","🧫","🧬","🔭","🔬","🕳","💊","💉","🩸","🩹","🩺","🌡","🏷","🔖","🚽","🚿","🛁","🛀","🪒","🧴","🧻","🧼","🧽","🧹","🧺","🔑","🗝","🛋","🪑","🛌","🛏","🚪","🧳","🛎","🖼","🧭","🗺","⛱","🗿","🛍","🎈","🎏","🎀","🧧","🎁","🎊","🎉","🎎","🎐","🏮","🪔","✉","📩","📨","📧","💌","📮","📪","📫","📬","📭","📦","📯","📥","📤","📜","📃","📑","📊","📈","📉","📄","📅","📆","🗓","📇","🗃","🗳","🗄","📋","🗒","📁","📂","🗂","🗞","📰","📓","📕","📗","📘","📙","📔","📒","📚","📖","🔗","📎","🖇","✂","📐","📏","📌","📍","🧷","🧵","🧶","🔐","🔒","🔓","🔏","🖊","🖋","✒","📝","✏","🖍","🖌","🔍","🔎","👚","👕","🥼","🦺","🧥","👖","👔","👗","👘","🥻","🩱","👙","🩲","🩳","💄","💋","👣","🧦","👠","👡","👢","🥿","👞","👟","🩰","🥾","🧢","👒","🎩","🎓","👑","⛑","🎒","👝","👛","👜","💼","👓","🕶","🥽","🧣","🧤","💍","🌂","☂"],
-                ["☮","✝","☪","🕉","☸","✡","🔯","🕎","☯","☦","🛐","⛎","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🆔","⚛","⚕","☢","☣","📴","📳","🈶","🈚","🈸","🈺","🈷","✴","🆚","🉑","💮","🉐","㊙","㊗","🈴","🈵","🈹","🈲","🅰","🅱","🆎","🆑","🅾","🆘","⛔","📛","🚫","❌","⭕","💢","♨","🚷","🚯","🚳","🚱","🔞","📵","🚭","❗","❕","❓","❔","‼","⁉","💯","🔅","🔆","🔱","⚜","〽","⚠","🚸","🔰","♻","🈯","💹","❇","✳","❎","✅","💠","🌀","➿","🌐","♾","Ⓜ","🏧","🚾","♿","🅿","🈳","🈂","🛂","🛃","🛄","🛅","🚰","🚹","♂","🚺","♀","⚧","🚼","🚻","🚮","🎦","📶","🈁","🆖","🆗","🆙","🆒","🆕","🆓","0⃣","1⃣","2⃣","3⃣","4⃣","5⃣","6⃣","7⃣","8⃣","9⃣","🔟","🔢","▶","⏸","⏯","⏹","⏺","⏏","⏭","⏮","⏩","⏪","🔀","🔁","🔂","◀","🔼","🔽","⏫","⏬","➡","⬅","⬆","⬇","↗","↘","↙","↖","↕","↔","🔄","↪","↩","🔃","⤴","⤵","#⃣","*⃣","ℹ","🔤","🔡","🔠","🔣","🎵","🎶","〰","➰","✔","➕","➖","➗","✖","💲","💱","©","®","™","🔚","🔙","🔛","🔝","🔜","☑","🔘","🔴","🟠","🟡","🟢","🔵","🟣","🟤","⚫","⚪","🟥","🟧","🟨","🟩","🟦","🟪","🟫","⬛","⬜","◼","◻","◾","◽","▪","▫","🔸","🔹","🔶","🔷","🔺","🔻","🔲","🔳","🔈","🔉","🔊","🔇","📣","📢","🔔","🔕","🃏","🀄","♠","♣","♥","♦","🎴","👁‍🗨","🗨","💭","🗯","💬","🕐","🕑","🕒","🕓","🕔","🕕","🕖","🕗","🕘","🕙","🕚","🕛","🕜","🕝","🕞","🕟","🕠","🕡","🕢","🕣","🕤","🕥","🕦","🕧"],
-                ["🏳","🏴","🏁","🚩","🎌","🏴‍☠️","🏳️‍🌈","🏳️‍⚧️","🇦🇨","🇦🇩","🇦🇪","🇦🇫","🇦🇬","🇦🇮","🇦🇱","🇦🇲","🇦🇴","🇦🇶","🇦🇷","🇦🇸","🇦🇹","🇦🇺","🇦🇼","🇦🇽","🇦🇿","🇧🇦","🇧🇧","🇧🇩","🇧🇪","🇧🇫","🇧🇬","🇧🇭","🇧🇮","🇧🇯","🇧🇱","🇧🇲","🇧🇳","🇧🇴","🇧🇶","🇧🇷","🇧🇸","🇧🇹","🇧🇼","🇧🇾","🇧🇿","🇨🇦","🇨🇨","🇨🇩","🇨🇫","🇨🇬","🇨🇭","🇨🇮","🇨🇰","🇨🇱","🇨🇲","🇨🇳","🇨🇴","🇨🇷","🇨🇺","🇨🇻","🇨🇼","🇨🇽","🇨🇾","🇨🇿","🇩🇪","🇩🇯","🇩🇰","🇩🇲","🇩🇴","🇩🇿","🇪🇨","🏴󠁧󠁢󠁥󠁮󠁧󠁿","🇪🇪","🇪🇬","🇪🇭","🇪🇷","🇪🇸","🇪🇹","🇪🇺","🇫🇮","🇫🇯","🇫🇰","🇫🇲","🇫🇴","🇫🇷","🇬🇦","🇬🇧","🇬🇩","🇬🇪","🇬🇫","🇬🇬","🇬🇭","🇬🇮","🇬🇱","🇬🇲","🇬🇳","🇬🇵","🇬🇶","🇬🇷","🇬🇸","🇬🇹","🇬🇺","🇬🇼","🇬🇾","🇭🇰","🇭🇳","🇭🇷","🇭🇹","🇭🇺","🇮🇨","🇮🇩","🇮🇪","🇮🇱","🇮🇲","🇮🇳","🇮🇴","🇮🇶","🇮🇷","🇮🇸","🇮🇹","🇯🇪","🇯🇲","🇯🇴","🇯🇵","🇰🇪","🇰🇬","🇰🇭","🇰🇮","🇰🇲","🇰🇳","🇰🇵","🇰🇷","🇰🇼","🇰🇾","🇰🇿","🇱🇦","🇱🇧","🇱🇨","🇱🇮","🇱🇰","🇱🇷","🇱🇸","🇱🇹","🇱🇺","🇱🇻","🇱🇾","🇲🇦","🇲🇨","🇲🇩","🇲🇪","🇲🇬","🇲🇭","🇲🇰","🇲🇱","🇲🇲","🇲🇳","🇲🇴","🇲🇵","🇲🇶","🇲🇷","🇲🇸","🇲🇹","🇲🇺","🇲🇻","🇲🇼","🇲🇽","🇲🇾","🇲🇿","🇳🇦","🇳🇨","🇳🇪","🇳🇫","🇳🇬","🇳🇮","🇳🇱","🇳🇴","🇳🇵","🇳🇷","🇳🇺","🇳🇿","🇴🇲","🇵🇦","🇵🇪","🇵🇫","🇵🇬","🇵🇭","🇵🇰","🇵🇱","🇵🇲","🇵🇳","🇵🇷","🇵🇸","🇵🇹","🇵🇼","🇵🇾","🇶🇦","🇷🇪","🇷🇴","🇷🇸","🇷🇺","🇷🇼","🇸🇦","🏴󠁧󠁢󠁳󠁣󠁴󠁿","🇸🇧","🇸🇨","🇸🇩","🇸🇪","🇸🇬","🇸🇭","🇸🇮","🇸🇰","🇸🇱","🇸🇲","🇸🇳","🇸🇴","🇸🇷","🇸🇸","🇸🇹","🇸🇻","🇸🇽","🇸🇾","🇸🇿","🇹🇦","🇹🇨","🇹🇩","🇹🇫","🇹🇬","🇹🇭","🇹🇯","🇹🇰","🇹🇱","🇹🇲","🇹🇳","🇹🇴","🇹🇷","🇹🇹","🇹🇻","🇹🇼","🇹🇿","🇺🇦","🇺🇬","🇺🇳","🇺🇸","🇺🇾","🇺🇿","🇻🇦","🇻🇨","🇻🇪","🇻🇬","🇻🇮","🇻🇳","🇻🇺","🏴󠁧󠁢󠁷󠁬󠁳󠁿","🇼🇫","🇼🇸","🇽🇰","🇾🇪","🇾🇹","🇿🇦","🇿🇲","🇿🇼"]
-            ],
+            searchText: "",
+            onlineList: [],
+            attachmentList: [],
+            emojis: emojiList,
             emojiType: 0
         }
     },
@@ -643,6 +888,14 @@ export default {
             {
                 return "/api" + this.$parent.roomInfo.avatar;
             }
+        },
+        onlineDisplay() {
+            let str = ""
+            for (let usr of this.onlineList)
+            {
+                str += usr.name + '\n';
+            }
+            return str;
         }
     },
     methods: {
@@ -678,31 +931,55 @@ export default {
                 }
             });
         },
-        joinRoom(roomid, callback) {
-            if (this.$parent.roomInfo.roomid != "")
-            {
-                this.io.emit("leave_room");
-            }
-            this.io.emit("join_room", roomid, callback);
-            this.io.emit("get_online", (r)=>{
-                console.log(r.data);
+        deleteRoom() {
+            this.$confirm(`你确定要解散房间 ${this.$parent.roomInfo.name} 吗？`, '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.io.emit("delete_room", this.$parent.roomInfo.roomid, r=>{
+                    if (r.code == 0)
+                    {
+                        this.$message({
+                            type: 'success',
+                            message: '解散成功!'
+                        });
+                        this.$router.push("/");
+                    }
+                    else
+                    {
+                        this.$message({
+                            type: 'error',
+                            message: '解散失败: ' + r.msg
+                        });
+                    }
+                })
+
+            }).catch(() => {
+     
             });
         },
         getHistory() {
+            this.loadingHistory = true;
             if (this.msgList.length == 0)
             {
                 this.io.emit("msg_history", this.$parent.roomInfo.roomid, 1, -1, (r) => {
                     if (r.code == 0)
                     {
-                        this.msgList = r.data;
+                        this.finishLoading = r.data.done;
+                        this.msgList = r.data.list;
                         this.$nextTick(()=>{
                             this.scrollToEnd();
+                            this.loadingHistory = false;
                         });
                     }
                     else
                     {
                         this.$message.error(r.msg);
+                        this.loadingHistory = false;
+                        this.finishLoading = true;
                     }
+                    this.startWatchingLoading();
                 });
             }
             else
@@ -710,21 +987,30 @@ export default {
                 this.io.emit("msg_history", this.$parent.roomInfo.roomid, 1, this.msgList[0].id, (r) => {
                     if (r.code == 0)
                     {
-                        for (let msg of r.data)
+                        this.finishLoading = r.data.done;
+                        r.data.list.reverse();
+                        for (let msg of r.data.list)
                         {
                             this.msgList.splice(0, 0, msg);
                         }
+                        let msgArea = this.$el.querySelector(".message-area");
+                        if (msgArea.scrollTop == 0)
+                        {
+                            msgArea.scrollTop += 50;
+                        }
                         this.$nextTick(()=>{
-                            this.scrollToEnd();
+                            this.loadingHistory = false;
                         });
                     }
                     else
                     {
                         this.$message.error(r.msg);
+                        this.loadingHistory = false;
+                        this.finishLoading = true;
                     }
+                    this.startWatchingLoading();
                 });
             }
-            this.scrollToEnd();
         },
         scrollToEnd(force=true) {
             let msgArea = this.$el.querySelector(".message-area");
@@ -753,6 +1039,21 @@ export default {
                 }
             }, 200);
         },
+        startWatchingLoading() {
+            setTimeout(()=>{
+                this.loadMsgWatcher = setInterval(()=>{
+                    if (!this.finishLoading && !this.loadingHistory)
+                    {
+                        let msgArea = this.$el.querySelector(".message-area");
+                        if (msgArea.scrollTop <= 100)
+                        {
+                            clearInterval(this.loadMsgWatcher);
+                            this.getHistory();
+                        }
+                    }
+                }, 200);
+            }, 1000);
+        },
         cropUploadSuccess(r, field){
             if (r.code == 0)
             {
@@ -764,7 +1065,40 @@ export default {
             }
         },
         cropUploadFail(status, field){
-
+            this.$message.error("上传失败：" + status);
+        },
+        attachmentUploadSuccess(rep, file, fileList) {
+            if (rep.code == 0)
+            {
+                this.$message.success("上传成功！");
+                this.msgInput += ` ${rep.data} `;
+            }
+            else if (rep.code == -1)
+            {
+                this.$message.error("上传失败：文件格式不受支持！")
+            }
+            else
+            {
+                this.$message.error(rep.msg);
+            }
+        },
+        attachmentUploadError(err, file, fileList) {
+            this.$message.error(err);
+        },
+        copyLink()
+        {
+            this.$copyText(this.config.fullurl_s + this.$parent.roomInfo.roomid);
+            this.$message.success("已将房间链接复制到剪切板！");
+        },
+        shareToPlatform(platform) {
+            if (platform == "qq")
+            {
+                window.open('https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=' + encodeURIComponent(document.location) + '?sharesource=qzone&title=' + this.$parent.roomInfo.name + '&pics=' + "" + '&summary=' + '');
+            }
+            else
+            {
+                this.$message.info("平台需要 APIKey，时间紧迫，没去弄");
+            }
         }
     },
     mounted() {
@@ -787,14 +1121,53 @@ export default {
                 }
             });
         });
+
+        this.io.on("user_record", (r)=>{
+            console.log(r);
+            if (r.msg == "join")
+            {
+                if (r.data.uid != this.$parent.account.uidMd5)
+                {
+                    let usr = this.onlineList.find((val)=>(val.uid==r.data.uid));
+                    if (usr == undefined)
+                    {
+                        this.onlineList.push(r.data);
+                        this.$notify({
+                            title: "系统提醒",
+                            message: `${r.data.name} 加入了聊天室`
+                        });
+                    }
+                }
+            }
+            else
+            {
+                if (r.data.uid != this.$parent.account.uidMd5)
+                {
+                    let usr = this.onlineList.find((val)=>(val.uid==r.data.uid));
+                    if (usr != undefined)
+                    {
+                        this.onlineList.splice(this.onlineList.indexOf(usr), 1);
+                        this.$notify({
+                            title: "系统提醒",
+                            message: `${r.data.name} 离开了聊天室`
+                        });
+                    }
+                }
+            }
+        });
     },
     beforeRouteUpdate (to, from, next) {
         this.$parent.roomInfo.roomid = to.params["room"];
         if (to.params["room"].length != 0)
         {
-            this.joinRoom(this.$parent.roomInfo.roomid, (r) => {
+            this.msgList = [];
+            this.io.emit("join_room", this.$parent.roomInfo.roomid, true, r=>{
                 if (r.code == 0)
                 {
+                    this.io.emit("get_online", r=>{
+                        this.onlineList = r.data;
+                        console.log(vm.onlineList);
+                    });
                     this.$parent.roomInfo = r.data;
                     this.$parent.roomInfo.name = r.data.name;
                     this.$parent.roomInfo.description = r.data.description;
@@ -808,15 +1181,19 @@ export default {
                 }
             });
         }
-        this.getHistory();
         next();
     },
     beforeRouteEnter (to, from, next) {
         next(vm => {
             vm.$parent.roomInfo.roomid = vm.$route.params["room"];
-            vm.joinRoom(vm.$parent.roomInfo.roomid, (r) => {
+            vm.io.emit("join_room", vm.$parent.roomInfo.roomid, false, r=>{
                 if (r.code == 0)
                 {
+                    vm.io.emit("get_online", r=>{
+                        console.log(r);
+                        vm.onlineList = r.data;
+                        console.log(vm.onlineList);
+                    });
                     vm.$parent.roomInfo = r.data;
                     vm.$parent.roomInfo.name = r.data.name;
                     vm.$parent.roomInfo.description = r.data.description;
