@@ -849,7 +849,7 @@ export default {
                 avatar: "",
             },
             showSidebar_Info: false,
-            showSidebar_Share: true,
+            showSidebar_Share: false,
             showSearchbar: false,
             showCropUpload: false,
             showFacePanel: false,

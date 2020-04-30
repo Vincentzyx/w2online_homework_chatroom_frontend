@@ -158,7 +158,7 @@ export default {
     },
     data() {
         return {
-            showCreatePanel: true,
+            showCreatePanel: false,
             showCropUpload: false,
             createRoomInfo: {
                 name: "",
