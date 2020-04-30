@@ -77,7 +77,7 @@
                     <div class="select-file" @click="showAttachPanel=!showAttachPanel"><i class="el-icon-paperclip"></i></div>
                     <div class="attach-panel" v-if="showAttachPanel">
                         <el-upload
-                        class="upload-demo"
+                        class="upload-attachment"
                         action="/api/attachment-upload"
                         :on-success="attachmentUploadSuccess"
                         :on-error="attachmentUploadError"
@@ -1071,7 +1071,7 @@ export default {
             if (rep.code == 0)
             {
                 this.$message.success("上传成功！");
-                this.msgInput += ` ${rep.data} `;
+                this.msgInput += ` http://${this.config.host}/api${rep.data} `;
             }
             else if (rep.code == -1)
             {

@@ -197,22 +197,17 @@ export default {
             }
         },
         createRoom() {
-            if (this.$parent.roomInfo.roomid != "")
-            {
-                this.io.emit("leave_room", (r)=>{
-                    this.io.emit("create_room", (r)=>{
-                        this.io.emit("message", "我创建了群聊");
-                        console.log(r);
-                        this.io.emit("modify_roominfo", r.data.roomid, this.createRoomInfo, (r)=>{
-                            console.log(r);
-                            this.$parent.roomInfo.name = r.data.name;
-                            this.$parent.roomInfo.avatar = r.data.avatar;
-                            this.$parent.roomInfo.description = r.data.description;
-                        });
-                        this.$router.push("/" + r.data.roomid);
+            this.io.emit("leave_room", (r)=>{
+                this.io.emit("create_room", (r)=>{
+                    this.io.emit("message", "我创建了群聊");
+                    this.io.emit("modify_roominfo", r.data.roomid, this.createRoomInfo, (r)=>{
+                        this.$parent.roomInfo.name = r.data.name;
+                        this.$parent.roomInfo.avatar = r.data.avatar;
+                        this.$parent.roomInfo.description = r.data.description;
                     });
+                    this.$router.push("/" + r.data.roomid);
                 });
-            }
+            });
         },
         cropUploadSuccess(r, field){
             if (r.code == 0)
