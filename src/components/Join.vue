@@ -123,6 +123,7 @@
                 background-color:#777777;
             }
             background-size: cover;
+            background-position-y: 50%;
         }
         div {
             font-size: 1.1rem;

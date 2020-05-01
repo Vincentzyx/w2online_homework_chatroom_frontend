@@ -6,7 +6,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import SocketIO from 'socket.io-client';
 import VueClipboard from 'vue-clipboard2';
 
-let debug = false;
+let debug = true;
 
 Vue.config.productionTip = false;
 
