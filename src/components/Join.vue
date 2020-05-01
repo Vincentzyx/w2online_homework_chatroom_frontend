@@ -1,5 +1,5 @@
 <template>
-    <dir class="container">
+    <div class="container">
         <div class="title">聊天室</div>
         <div class="mid">
             <input v-model="$parent.roomInfo.roomid" @keydown.enter="joinRoom()" placeholder="请输入房间号" type="text">
@@ -21,7 +21,7 @@
                 </image-upload>
             </div>
         </transition>
-    </dir>
+    </div>
 </template>
 
 <style lang="scss" scoped>
@@ -38,9 +38,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-inline-start: 0;
-    margin-block-start: 0;
-    margin-block-end: 0;
+
     .title {
         margin-top: 10vh;
         margin-bottom: 3%;

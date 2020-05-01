@@ -11,7 +11,7 @@
                     <i class="el-icon-user"></i>
                 </div>
             </div>
-            <i @click="$message.info('尚未实现')" class="el-icon-setting"></i>
+            <i @click="gotoSettings" class="el-icon-setting"></i>
         </div>
         <div class="router-content">
             <transition name="fade">
@@ -94,12 +94,15 @@ export default {
             if (this.$router.currentRoute.path != "/")
                 this.$router.push("/");
         },
+        gotoSettings() {
+            if (this.$router.currentRoute.path != "settings")
+                this.$router.push("/settings");
+        },
         onClosing() {
-            if (this.roomInfo.roomid != "" || true)
+            if (this.roomInfo.roomid != "")
             {
                 this.io.emit("leave_room");
             }
-            this.io.emit("fuck");
         }
     }
 }

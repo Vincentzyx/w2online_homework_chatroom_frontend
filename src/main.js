@@ -5,8 +5,8 @@ import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import SocketIO from 'socket.io-client';
 import VueClipboard from 'vue-clipboard2';
-
-let debug = true;
+ 
+let debug = false;
 
 Vue.config.productionTip = false;
 
@@ -47,6 +47,10 @@ const routes = [
     {
         path: "/profile",
         component: ()=>import("@/components/Profile.vue")
+    },
+    {
+        path: "/settings",
+        component: ()=>import("@/components/Settings.vue")
     },
     {
         path: "/:room",
