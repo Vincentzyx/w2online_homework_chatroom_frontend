@@ -38,16 +38,24 @@
             <div class="message-area">
                 <div v-for="msg in msgList" :key="msg.id" class="msg" :class="{'self-msg': msg.user==$parent.account.uidMd5}">
                     <div v-show="!showSearchbar || searchText=='' || msg.msg.indexOf(searchText) != -1">
-                        <img v-if="msg.user!=$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
+                        <img class="user-avatar" v-if="msg.user!=$parent.account.uidMd5" :src="config.gravatarUrl + '/avatar/'+msg.user+'?s=64&d=identicon'" />
                         <div v-if="msg.user!=$parent.account.uidMd5" class="text">
                             <div class="name">{{msg.name}}</div>
                             <div class="content">{{msg.msg}}</div>
+                            <div class="image" v-if="'images' in msg">
+                                <div class="img" :style="'background-image:url(\'' + img + '\')'" v-for="(img, index) of msg.images" :key="index+img"></div>
+                                <!-- <img class="img" :src="img" v-for="(img, index) of msg.images" :key="index+img"> -->
+                            </div>
                         </div>
                         <div v-if="msg.user==$parent.account.uidMd5" class="text">
                             <div class="name">{{msg.name}}</div>
                             <div class="content">{{msg.msg}}</div>
+                            <div class="image" v-if="'images' in msg">
+                                <div class="img" :style="'background-image:url(\'' + img + '\')'" v-for="(img, index) of msg.images" :key="index+img"></div>
+                                <!-- <img class="img" :src="img" v-for="(img, index) of msg.images" :key="index+img"> -->
+                            </div>
                         </div>
-                        <img v-if="msg.user==$parent.account.uidMd5" :src="'https://www.gravatar.com/avatar/'+msg.user+'?s=64&d=identicon'" />
+                        <img class="user-avatar" v-if="msg.user==$parent.account.uidMd5" :src=" config.gravatarUrl + '/avatar/'+msg.user+'?s=64&d=identicon'" />
                     </div>
                 </div>
             </div>
@@ -389,6 +397,10 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 margin-left: 0 !important;
                 margin-right: 40px;
                 text-align: right;
+                ::selection {
+                    background-color: white;
+                    color: black;
+                }
 
                 .text {
                     background-color: #0176ff !important;
@@ -403,12 +415,15 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
 
                     border-radius: 10px 10px 0 10px !important;
                 }
+                .img {
+                    background-position-x: 100%;
+                }
             }
 
             .msg {
                 margin-left: 40px;
                 width: 100%;
-                img {
+                .user-avatar {
                     width: 50px;
                     height: 50px;
                     border-radius: 50%;
@@ -429,6 +444,14 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     .content {
                         margin-top: 5px;
                         word-wrap: break-word;
+                    }
+                    .img {
+                        width: 200px;
+                        height: 123px;
+                        background-size: contain;
+                        background-repeat: no-repeat;
+                        margin: 5px;
+                        margin-top: 10px;
                     }
                 }
             }
@@ -865,7 +888,8 @@ export default {
             onlineList: [],
             attachmentList: [],
             emojis: emojiList,
-            emojiType: 0
+            emojiType: 0,
+            imageRegExp: null
         }
     },
     computed: {
@@ -882,7 +906,7 @@ export default {
         roomAvatar() {
             if (this.$parent.roomInfo.avatar.length == 0)
             {
-                return 'https://www.gravatar.com/avatar/' + md5(this.$parent.roomInfo.roomid) + '?s=64&d=identicon';
+                return this.config.gravatarUrl + '/avatar/' + md5(this.$parent.roomInfo.roomid) + '?s=64&d=identicon';
             }
             else
             {
@@ -966,6 +990,19 @@ export default {
                 this.io.emit("msg_history", this.$parent.roomInfo.roomid, 1, -1, (r) => {
                     if (r.code == 0)
                     {
+                        for (let msg of r.data.list)
+                        {
+                            let imgs = msg.msg.match(this.imageRegExp);
+                            if (imgs != null)
+                            {
+                                msg.images = [];
+                                for (let img of imgs)
+                                {
+                                    msg.images.push(img);
+                                    msg.msg = msg.msg.replace(img, "");
+                                }
+                            }
+                        }
                         this.finishLoading = r.data.done;
                         this.msgList = r.data.list;
                         this.$nextTick(()=>{
@@ -987,6 +1024,19 @@ export default {
                 this.io.emit("msg_history", this.$parent.roomInfo.roomid, 1, this.msgList[0].id, (r) => {
                     if (r.code == 0)
                     {
+                        for (let msg of r.data.list)
+                        {
+                            let imgs = msg.msg.match(this.imageRegExp);
+                            if (imgs != null)
+                            {
+                                msg.images = [];
+                                for (let img of imgs)
+                                {
+                                    msg.images.push(img);
+                                    msg.msg = msg.msg.replace(img, "");
+                                }
+                            }
+                        }
                         this.finishLoading = r.data.done;
                         r.data.list.reverse();
                         for (let msg of r.data.list)
@@ -1102,7 +1152,19 @@ export default {
         }
     },
     mounted() {
+        this.imageRegExp = new RegExp(`${this.config.httpProtocol}${this.config.host}/api/attachments/[a-zA-Z0-9]*?\.(jpg|png|gif|bmp|webp)`, "g");
         this.io.on("message", (r) => {
+            let msg = r.data.msg;
+            let imgs = msg.match(this.imageRegExp);
+            if (imgs != null)
+            {
+                r.data.images = [];
+                for (let img of imgs)
+                {
+                    r.data.images.push(img);
+                    r.data.msg = msg.replace(img, "");
+                }
+            }
             this.msgList.push(r.data);
             this.$nextTick(()=>{
                 if (r.data.user == this.$parent.account.uidMd5)

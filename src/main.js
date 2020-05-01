@@ -4,7 +4,9 @@ import App from './App.vue';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import SocketIO from 'socket.io-client';
-import VueClipboard from 'vue-clipboard2'
+import VueClipboard from 'vue-clipboard2';
+
+let debug = true;
 
 Vue.config.productionTip = false;
 
@@ -12,18 +14,30 @@ Vue.use(VueRouter);
 Vue.use(ElementUI);
 Vue.use(VueClipboard);
 
-Vue.prototype.io = SocketIO();
-// Vue.prototype.config = {
-//     fullurl: "http://localhost:8081/#",
-//     fullurl_s: "http://localhost:8081/#/",
-//     host: "localhost"
-// }
-
 Vue.prototype.config = {
+    httpProtocol: "http://",
     fullurl: "http://chat.vi.tn/#",
     fullurl_s: "http://chat.vi.tn/#/",
-    host: "chat.vi.tn"
+    host: "chat.vi.tn",
+    socketioUrl: "http://106.53.7.10:5000/",
+    gravatarUrl: "https://chat.vi.tn/gravatar"
 }
+
+if (debug)
+{
+    Vue.prototype.config = {
+        httpProtocol: "http://",
+        fullurl: "http://localhost:8081/#",
+        fullurl_s: "http://localhost:8081/#/",
+        host: "localhost:8081",
+        socketioUrl: "http://localhost:5000/",
+        gravatarUrl: "https://www.gravatar.com"
+    }
+}
+
+
+
+Vue.prototype.io = SocketIO("http://106.53.7.10:5000/");
 
 const routes = [
     {
