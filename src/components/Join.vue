@@ -38,9 +38,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-around;
+    padding-inline-start: 0;
+    margin-block-start: 0;
+    margin-block-end: 0;
     .title {
-        margin-top: 5%;
+        margin-top: 10%;
         margin-bottom: 3%;
         font-size: 3rem;
         font-weight: 120;

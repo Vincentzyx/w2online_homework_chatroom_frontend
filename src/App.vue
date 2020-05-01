@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <div class="left-side-bar">
-            <i class="el-icon-message" @click="gotoIndex"></i>
+            <img class="icon" src="/icon.png" @click="gotoIndex">
             <div class="left-btns">
                 <div class="btn-chat" @click="gotoChat">
                     <i class="el-icon-chat-square"></i>
@@ -15,7 +15,7 @@
         </div>
         <div class="router-content">
             <transition name="fade">
-                <router-view></router-view>
+                <router-view class="router-view"></router-view>
             </transition>
         </div>
     </div>
@@ -105,7 +105,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 $hoverColor: rgb(37, 139, 255);
 
 .fade-enter-active, .fade-leave-active {
@@ -131,8 +131,18 @@ $hoverColor: rgb(37, 139, 255);
     height: 100vh;
 }
 
+
 .router-content {
-    width: 100%;
+    flex: 1;
+    position: relative;
+
+    .router-view {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .left-side-bar {
@@ -140,10 +150,11 @@ $hoverColor: rgb(37, 139, 255);
     text-align: center;
     box-shadow: 0 0 5px rgb(211, 211, 211);
     user-select: none;
-    .el-icon-message {
-        margin-top: 2vh;
-        font-size: 2.5rem;
-        color: $hoverColor;
+
+    .icon {
+        margin-top: 4vh;
+        height: 35px;
+        width: 35px;
         cursor: pointer;
     }
 
@@ -160,10 +171,12 @@ $hoverColor: rgb(37, 139, 255);
         font-size: 2rem;
         line-height: 5px;
         margin-bottom: 5vh;
+        opacity: 0;
     }
 
     .active {
         color: #006deb;
+        opacity: 1;
     }
 
     .btn-profile {

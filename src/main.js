@@ -21,7 +21,7 @@ Vue.prototype.config = {
     host: "chat.vi.tn",
     socketioUrl: "http://106.53.7.10:5000/",
     gravatarUrl: "http://chat.vi.tn/gravatar"
-}
+};
 
 if (debug)
 {
@@ -32,7 +32,7 @@ if (debug)
         host: "localhost:8081",
         socketioUrl: "http://localhost:5000/",
         gravatarUrl: "https://www.gravatar.com"
-    }
+    };
 }
 
 

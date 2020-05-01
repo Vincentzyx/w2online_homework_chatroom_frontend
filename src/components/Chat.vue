@@ -434,7 +434,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     background-color: #f5f6fa;
                     padding: 15px;
                     margin: 15px;
-                    max-width: 40%;
+                    max-width: 300px;
                     vertical-align: bottom;
                     border-radius: 10px 10px 10px 0;
                     .name {
@@ -531,7 +531,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     position: absolute;
                     background-color: white;
                     left: -170px;
-                    top: -220px;
+                    bottom: 20vh;
                     
                     width: 245px;
                     height: 225px;
@@ -576,7 +576,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
 
                 .attach-panel {
                     position: absolute;
-                    bottom: 130px;
+                    bottom: 20vh;
                     left:-200px;
                     padding: 20px;
                     width: 250px;
