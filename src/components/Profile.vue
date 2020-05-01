@@ -17,10 +17,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-around;
 
     .change-nick {
-        margin-top: 20%;
+        margin-top: 20vh;
         width: 80%;
         display: flex;
 
@@ -58,7 +57,7 @@
     }
     .quote {
         color: rgb(20, 134, 20);
-        margin-top: 10%;
+        margin-top: 10vh;
         user-select: none;
     }
 }

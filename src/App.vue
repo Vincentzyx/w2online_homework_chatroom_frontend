@@ -153,8 +153,8 @@ $hoverColor: rgb(37, 139, 255);
 
     .icon {
         margin-top: 4vh;
-        height: 35px;
-        width: 35px;
+        height: 30px;
+        width: 30px;
         cursor: pointer;
     }
 

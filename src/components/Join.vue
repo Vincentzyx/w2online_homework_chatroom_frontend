@@ -42,7 +42,7 @@
     margin-block-start: 0;
     margin-block-end: 0;
     .title {
-        margin-top: 10%;
+        margin-top: 10vh;
         margin-bottom: 3%;
         font-size: 3rem;
         font-weight: 120;
@@ -109,7 +109,7 @@
 
     .room-info {
         box-sizing: border-box;
-        margin-top: 5%;
+        margin-top: 5vh;
         text-align: left;
         width: 60%;
         padding: 20px;

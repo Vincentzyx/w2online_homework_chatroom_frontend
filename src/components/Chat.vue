@@ -434,7 +434,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     background-color: #f5f6fa;
                     padding: 15px;
                     margin: 15px;
-                    max-width: 300px;
+                    max-width: 350px;
                     vertical-align: bottom;
                     border-radius: 10px 10px 10px 0;
                     .name {
