@@ -6,7 +6,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import SocketIO from 'socket.io-client';
 import VueClipboard from 'vue-clipboard2';
 
-let debug = true;
+let debug = false;
 
 Vue.config.productionTip = false;
 
@@ -20,7 +20,7 @@ Vue.prototype.config = {
     fullurl_s: "http://chat.vi.tn/#/",
     host: "chat.vi.tn",
     socketioUrl: "http://106.53.7.10:5000/",
-    gravatarUrl: "https://chat.vi.tn/gravatar"
+    gravatarUrl: "http://chat.vi.tn/gravatar"
 }
 
 if (debug)
