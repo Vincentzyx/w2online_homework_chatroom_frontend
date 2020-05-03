@@ -968,6 +968,10 @@ export default {
                             type: 'success',
                             message: '解散成功!'
                         });
+                        this.$parent.roomInfo.roomid = "";
+                        this.$parent.roomInfo.name = "";
+                        this.$parent.roomInfo.avatar = "";
+                        this.msgList = [];
                         this.$router.push("/");
                     }
                     else
@@ -1185,7 +1189,7 @@ export default {
         });
 
         this.io.on("user_record", (r)=>{
-            console.log(r);
+            if (this.$parent.roomInfo.roomid == "") return;
             if (r.msg == "join")
             {
                 if (r.data.uid != this.$parent.account.uidMd5)
@@ -1217,6 +1221,24 @@ export default {
                 }
             }
         });
+
+        this.io.on("room_deleted", (r)=>{
+            console.log("room_deleted");
+            if (r.data.sender != this.$parent.account.uidMd5)
+            {
+                this.$message.error(`该房间 (${this.$parent.roomInfo.roomid}) 已解散`);
+                this.$parent.roomInfo.roomid = "";
+                this.$parent.roomInfo.name = "";
+                this.$parent.roomInfo.avatar = "";
+                this.msgList = [];
+                this.$router.push("/");
+            }
+        });
+    },
+    destroyed() {
+        this.io.off("message");
+        this.io.off("user_record");
+        this.io.off("room_deleted");
     },
     beforeRouteUpdate (to, from, next) {
         this.$parent.roomInfo.roomid = to.params["room"];
@@ -1228,7 +1250,6 @@ export default {
                 {
                     this.io.emit("get_online", r=>{
                         this.onlineList = r.data;
-                        console.log(vm.onlineList);
                     });
                     this.$parent.roomInfo = r.data;
                     this.$parent.roomInfo.name = r.data.name;
@@ -1252,9 +1273,7 @@ export default {
                 if (r.code == 0)
                 {
                     vm.io.emit("get_online", r=>{
-                        console.log(r);
                         vm.onlineList = r.data;
-                        console.log(vm.onlineList);
                     });
                     vm.$parent.roomInfo = r.data;
                     vm.$parent.roomInfo.name = r.data.name;

@@ -37,7 +37,7 @@ if (debug)
 
 
 
-Vue.prototype.io = SocketIO("http://106.53.7.10:5000/");
+Vue.prototype.io = SocketIO(Vue.prototype.config.socketioUrl);
 
 const routes = [
     {

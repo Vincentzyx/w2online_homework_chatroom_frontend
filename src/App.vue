@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <div class="left-side-bar">
-            <img class="icon" src="/icon.png" @click="gotoIndex">
+            <img class="icon" src="http://106.53.7.10/chatroom/icon.png" @click="gotoIndex">
             <div class="left-btns">
                 <div class="btn-chat" @click="gotoChat">
                     <i class="el-icon-chat-square"></i>
@@ -99,10 +99,7 @@ export default {
                 this.$router.push("/settings");
         },
         onClosing() {
-            if (this.roomInfo.roomid != "")
-            {
-                this.io.emit("leave_room");
-            }
+
         }
     }
 }

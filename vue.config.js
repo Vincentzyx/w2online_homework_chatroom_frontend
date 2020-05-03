@@ -15,5 +15,6 @@ module.exports = {
             },
         }
     },
-    productionSourceMap: false
+    productionSourceMap: false,
+    publicPath: process.env.NODE_ENV === 'production' ? "http://106.53.7.10/chatroom/" : "/"
 };
