@@ -196,6 +196,10 @@ export default {
                     }
                 });
             }
+            else
+            {
+                this.$message.info("请先输入房间号");
+            }
         },
         createRoom() {
             this.io.emit("leave_room", (r)=>{

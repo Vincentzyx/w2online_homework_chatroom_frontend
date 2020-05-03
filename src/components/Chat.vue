@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" @click="userClick">
         <div class="mid-content">
             <div class="info-bar">
                 <img :src="roomAvatar" />
@@ -64,9 +64,10 @@
                 v-model="msgInput">
                 </textarea>
                 <div class="edit-toolbox">
-                    <div class="face">
-                        <span @click="showFacePanel=!showFacePanel" :class="{active:showFacePanel}">☺</span>
-                        <div v-if="showFacePanel" class="face-panel">
+                    <div class="edit-toolbox-inner">
+                        <div class="face">
+                        <span class="show-emojis" @click.stop="showFacePanel=true;showAttachPanel=false" :class="{active:showFacePanel}">☺</span>
+                        <div v-if="showFacePanel" class="face-panel" @click.stop>
                             <div class="emoji-select">
                                 <span :class="{active: emojiType==0}" @click="emojiType=0">😀</span>
                                 <span :class="{active: emojiType==1}" @click="emojiType=1">🐱</span>
@@ -82,8 +83,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="select-file" @click="showAttachPanel=!showAttachPanel"><i class="el-icon-paperclip"></i></div>
-                    <div class="attach-panel" v-if="showAttachPanel">
+                    <div class="select-file" @click.stop="showAttachPanel=true;showFacePanel=false"><i class="el-icon-paperclip"></i></div>
+                    <div class="attach-panel" v-if="showAttachPanel" @click.stop>
                         <el-upload
                         class="upload-attachment"
                         action="/api/attachment-upload"
@@ -96,6 +97,7 @@
                         </el-upload>
                     </div>
                     <button @click="sendMsg" class="btn-send"><i class="el-icon-s-promotion"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -491,121 +493,132 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 }
             }
 
-            .edit-toolbox {
+            .edit-toolbox
+            {
                 position: relative;
-                display: flex;
-                flex-direction: row;
-                justify-content: space-around;
-                align-items: center;
-                padding-bottom: calc(3% + 20px);
-                line-height: 2.8rem;
-                font-size: 1.2rem;
-                color:gray;
                 width: 150px;
-                margin-left: auto;
-                user-select: none;
 
-                .active {
-                    color:#006deb;
-                }
-
-                .emoji-select {
-                    margin-left: 2px;
-                    span {
-                        display: inline-block;
-                        font-size: 1.2rem;
-                        box-sizing: border-box;
-                        height: 30px;
-                        width: 30px;
-                        line-height: 30px;
-                        text-align: center;
-                        border-radius: 3px;
-                    }
+                .edit-toolbox-inner {
+                    top: 3vh;
+                    left: 0;
+                    position: absolute;
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-around;
+                    align-items: center;
+                    line-height: 2.8rem;
+                    font-size: 1.2rem;
+                    color:gray;
+                    user-select: none;
 
                     .active {
-                        background-color: lightgray;
+                        color:#006deb;
                     }
-                }
 
-                .face-panel {
-                    position: absolute;
-                    background-color: white;
-                    left: -170px;
-                    bottom: 20vh;
-                    
-                    width: 245px;
-                    height: 225px;
-                    .emojis {
-                        display: flex;
-                        flex-wrap: wrap;
-                        overflow-y: auto;
-                        overflow-x: hidden;
-                        width: 245px;
-                        height: 180px;
-                        &::-webkit-scrollbar {
-                            width: 5px;
-                        }
-                        &::-webkit-scrollbar-track {
-                            background: #e8e8e8;
-                        }
-                        &::-webkit-scrollbar-thumb {
-                            background: #888;
-                        }
-                        &::-webkit-scrollbar-thumb:hover {
-                            background: #555;
-                        }
-                        div {
-                            display: block;
-                            width: 30px;
+                    .show-emojis {
+                        margin-left: 10px
+                    }
+
+                    .emoji-select {
+                        margin-left: 2px;
+                        span {
+                            display: inline-block;
+                            font-size: 1.2rem;
+                            box-sizing: border-box;
                             height: 30px;
-                            text-align: center;
+                            width: 30px;
                             line-height: 30px;
-                            &:hover {
-                                background-color: lightgray;
+                            text-align: center;
+                            border-radius: 3px;
+                        }
+
+                        .active {
+                            background-color: lightgray;
+                        }
+                    }
+
+                    .face-panel {
+                        position: absolute;
+                        background-color: white;
+                        left: -170px;
+                        bottom: 8vh;
+                        
+                        width: 245px;
+                        height: 225px;
+                        .emojis {
+                            display: flex;
+                            flex-wrap: wrap;
+                            overflow-y: auto;
+                            overflow-x: hidden;
+                            width: 245px;
+                            height: 180px;
+                            &::-webkit-scrollbar {
+                                width: 5px;
+                            }
+                            &::-webkit-scrollbar-track {
+                                background: #e8e8e8;
+                            }
+                            &::-webkit-scrollbar-thumb {
+                                background: #888;
+                            }
+                            &::-webkit-scrollbar-thumb:hover {
+                                background: #555;
+                            }
+                            div {
+                                display: block;
+                                width: 30px;
+                                height: 30px;
+                                text-align: center;
+                                line-height: 30px;
+                                &:hover {
+                                    background-color: lightgray;
+                                }
                             }
                         }
+                        
+                        box-shadow: 0 0 5px lightgray;
+                        user-select: none;
                     }
-                    
-                    box-shadow: 0 0 5px lightgray;
-                    user-select: none;
-                }
 
-                .select-file {
-                    @include setHoverColor;
-                }
-
-                .attach-panel {
-                    position: absolute;
-                    bottom: 20vh;
-                    left:-200px;
-                    padding: 20px;
-                    width: 250px;
-                    overflow: hidden;
-                    box-shadow: 0 0 5px lightgray;
-                    background-color: white;
-                    
-                    transition: all .3s;
-                    .label {
-                        font-size: 0.9rem;
+                    .select-file {
+                        @include setHoverColor;
+                        margin-left: 15px;
+                        font-size: 1.4rem;
                     }
-                    button {
+
+                    .attach-panel {
+                        position: absolute;
+                        bottom: 8vh;
+                        left:-200px;
+                        padding: 20px;
+                        width: 250px;
+                        overflow: hidden;
+                        box-shadow: 0 0 5px lightgray;
+                        background-color: white;
+                        
+                        transition: all .3s;
+                        .label {
+                            font-size: 0.9rem;
+                        }
+                        button {
+                            @include defaultButton;
+                            height: 30px;
+                            width: 100px;
+                        }
+                    }
+
+                    .face {
+                        @include setHoverColor;
+                    }
+
+                    .btn-send{
                         @include defaultButton;
-                        height: 30px;
-                        width: 100px;
+                        height: 40px;
+                        width: 40px;
+                        margin-left: 15px;
+                        font-size: 1.3rem;
+                        border-radius: 50%;
                     }
-                }
-
-                .face {
-                    @include setHoverColor;
-                }
-
-                .btn-send{
-                    @include defaultButton;
-                    height: 40px;
-                    width: 40px;
-                    margin-right: 20px;
-                    font-size: 1.3rem;
-                    border-radius: 50%;
                 }
             }
         }
@@ -923,6 +936,10 @@ export default {
         }
     },
     methods: {
+        userClick() {
+            this.showFacePanel = false;
+            this.showAttachPanel = false;
+        },
         sendMsg() {
             if (this.msgInput.length > 0)
             {
@@ -1166,7 +1183,7 @@ export default {
                 for (let img of imgs)
                 {
                     r.data.images.push(img);
-                    r.data.msg = msg.replace(img, "");
+                    r.data.msg = r.data.msg.replace(img, "");
                 }
             }
             this.msgList.push(r.data);
@@ -1223,7 +1240,6 @@ export default {
         });
 
         this.io.on("room_deleted", (r)=>{
-            console.log("room_deleted");
             if (r.data.sender != this.$parent.account.uidMd5)
             {
                 this.$message.error(`该房间 (${this.$parent.roomInfo.roomid}) 已解散`);

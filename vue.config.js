@@ -15,6 +15,14 @@ module.exports = {
             },
         }
     },
+    chainWebpack: (config) => {
+        config
+            .plugin('html')
+            .tap((args) => {
+                args[0].title = '聊天室 - 网络一线牵，珍惜这段缘';
+                return args;
+            });
+    },
     productionSourceMap: false,
     publicPath: process.env.NODE_ENV === 'production' ? "http://106.53.7.10/chatroom/" : "/"
 };
