@@ -446,6 +446,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                     .content {
                         margin-top: 5px;
                         word-wrap: break-word;
+                        white-space: pre-wrap;
                     }
                     .img {
                         width: 200px;
@@ -471,6 +472,7 @@ $leftShadow: -2px 0px 2px rgba(211, 211, 211, 0.5);
                 outline: none;
                 border: none;
                 margin: 20px;
+                padding: 10px;
                 font-size: 1.2rem;
                 overflow-y: auto;
                 background-color: rgb(245, 245, 245);
@@ -1246,15 +1248,23 @@ export default {
                 this.$parent.roomInfo.roomid = "";
                 this.$parent.roomInfo.name = "";
                 this.$parent.roomInfo.avatar = "";
+                this.$parent.roomInfo.description = "";
                 this.msgList = [];
                 this.$router.push("/");
             }
+        });
+
+        this.io.on("reload_roominfo", (r)=>{
+            this.$parent.roomInfo.name = r.data.name;
+            this.$parent.roomInfo.avatar = r.data.avatar;
+            this.$parent.roomInfo.description = r.data.description;
         });
     },
     destroyed() {
         this.io.off("message");
         this.io.off("user_record");
         this.io.off("room_deleted");
+        this.io.off("reload_roominfo");
     },
     beforeRouteUpdate (to, from, next) {
         this.$parent.roomInfo.roomid = to.params["room"];

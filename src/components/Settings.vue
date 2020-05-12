@@ -46,7 +46,10 @@
         0%{transform:rotate(180deg);}
         100%{transform:rotate(0deg);}
     }
-
+    @keyframes spin2{
+        0%{transform:rotate(180deg);}
+        100%{transform:rotate(0deg);}
+    }
 
     .btns {
         position: absolute;
@@ -78,6 +81,11 @@
             }
             &:active {
                 background-color: #13709e;
+                .el-icon-refresh {
+                    animation: spin2 0.5s ease 3s;
+                    animation-iteration-count: 3;
+                    animation-fill-mode: backwards;
+                }
             }
         }
         i {
